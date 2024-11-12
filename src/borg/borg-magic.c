@@ -25,6 +25,8 @@
 #include "../player-spell.h"
 #include "../ui-menu.h"
 
+#include "borg-cave.h"
+#include "borg-cave-view.h"
 #include "borg-init.h"
 #include "borg-io.h"
 #include "borg-trait.h"
@@ -138,7 +140,7 @@ static borg_spell_rating borg_spell_ratings_NECROMANCER[] =
 {
     { "Nether Bolt", 95, NETHER_BOLT },
     { "Sense Invisible", 85, SENSE_INVISIBLE },
-    { "Create Darkness", 5, CREATE_DARKNESS }, /* not sure this is borg happy */
+    { "Create Darkness", 5, CREATE_DARKNESS }, 
     { "Bat Form", 5, BAT_FORM }, // !FIX !TODO !AJG shapechange
     { "Read Minds", 85, READ_MINDS },
     { "Tap Unlife", 85, TAP_UNLIFE },
@@ -522,6 +524,14 @@ int borg_spell_fail_rate(const enum borg_spells spell)
     if (!player_has(player, PF_ZERO_FAIL)) {
         if (minfail < 5)
             minfail = 5;
+    }
+
+    /* Necromancers are punished by being on lit squares */
+    /* necromancers like the dark */
+    if (borg.trait[BI_CLASS] == CLASS_NECROMANCER &&
+        borg_grids[borg.c.y][borg.c.x].info & BORG_LIGHT) {
+        chance += 25;
+
     }
 
     /* Minimum failure rate and max */

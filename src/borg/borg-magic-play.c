@@ -58,6 +58,9 @@ static bool borg_can_play_spell(borg_magic *as)
     case SINGLE_COMBAT:
     case VAMPIRE_STRIKE:
     case COMMAND:
+    case CURSE:
+    case FORCEFUL_BLOW:
+    case MAIM_FOE:
     return false;
     default:
         break;
@@ -95,7 +98,7 @@ bool borg_play_magic(bool bored)
         return false;
 
     /* Dark */
-    if (!borg.trait[BI_CURLITE])
+    if (!borg.trait[BI_LIGHT])
         return false;
     if (borg_grids[borg.c.y][borg.c.x].info == BORG_DARK)
         return false;

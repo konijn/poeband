@@ -1314,7 +1314,7 @@ static void borg_handle_self(char *str)
         borg_note(format("# Called lite at (%d,%d)", old_c.y, old_c.x));
 
         /* If not holding a lite, then glow adjacent grids */
-        if (!borg.trait[BI_CURLITE]) {
+        if (!borg.trait[BI_LIGHT]) {
             /* Scan the "local" grids (5x5) 2 same as torch grid
              * The spells do some goofy radius thing.
              */
@@ -2230,8 +2230,8 @@ void borg_update(void)
 
         /* Clear our Uniques vars */
         borg_numb_live_unique    = 0;
-        borg_living_unique_index = 0;
-        borg_unique_depth        = 0;
+        borg_first_living_unique = 0;
+        borg_depth_hunted_unique = 0;
         int unique_depths[4] = {0, 0, 0, 0};
 
         /*Extract dead uniques and set some Prep code numbers */
@@ -2265,7 +2265,7 @@ void borg_update(void)
 
             /* Keep track of the three shallowest uniques.  */
             /* note that the uniques might not be in depth order */
-            if (borg_numb_live_unique < 3) {
+            if (borg_numb_live_unique < 4) {
                 /* track the depth of the three shallowest live uniques */
                 unique_depths[borg_numb_live_unique] = r_ptr->level;
 
@@ -2273,13 +2273,15 @@ void borg_update(void)
 
                 /* this is the first living unique */
                 if (borg_numb_live_unique == 1)
-                    borg_living_unique_index = u_i;
+                    borg_first_living_unique = u_i;
 
                 /* sort the top 3*/
                 if (borg_numb_live_unique == 3)
                     qsort(unique_depths, 3, sizeof(int), intcomp);
 
             } else {
+                borg_numb_live_unique++;
+
                 /* sort this in to only keep top (lowest) 3*/
                 if (r_ptr->level < unique_depths[2]) {
                     unique_depths[3] = r_ptr->level;
@@ -2290,7 +2292,14 @@ void borg_update(void)
         /* slight cheat here since we know if there is less than 3 */
         /* live uniques the deepest one is likely to be morgoth */
         /* and if there is 3 or more we have sorted the list */
-        borg_unique_depth = unique_depths[borg_numb_live_unique-1];
+        if (borg_numb_live_unique >= 3) {
+            borg_depth_hunted_unique = unique_depths[2];
+        } else {
+            if (borg_numb_live_unique != 0)
+                borg_depth_hunted_unique = unique_depths[borg_numb_live_unique - 1];
+            else
+                borg_depth_hunted_unique = 127;
+        }
 
         /* Forget the map */
         borg_forget_map();
@@ -2299,7 +2308,7 @@ void borg_update(void)
         reset = true;
 
         /* save once per level, but not if Lunal Scumming */
-        if (borg_flag_save && !borg.lunal_mode && !borg.munchkin_mode)
+        if (borg_cfg[BORG_AUTOSAVE] && !borg.lunal_mode && !borg.munchkin_mode)
             borg_save = true;
 
         /* Save new depth */
